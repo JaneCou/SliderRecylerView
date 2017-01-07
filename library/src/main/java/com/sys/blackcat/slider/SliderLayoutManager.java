@@ -8,8 +8,6 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 
-import java.lang.reflect.Field;
-
 /**
  * Created by yangcai on 16/12/28.
  */
@@ -247,42 +245,72 @@ public class SliderLayoutManager extends RecyclerView.LayoutManager {
         removeAllViews();
     }
 
-    @Override
-    public void onScrollStateChanged(int state) {
-        super.onScrollStateChanged(state);
-        if (state == RecyclerView.SCROLL_STATE_IDLE) {
-            View child = getChildAt(0);
-            int end = helper.getDecoratedEnd(child);
-            int width = child.getMeasuredWidth();
-            if (end == 0 || end == width) {
-                return;
-            }
-            int position = getPosition(child);
-            if (mRecyclerView == null) {
-                mRecyclerView = getRecyclerView();
-            }
-            if (end >= width / 2) {
-                if (mRecyclerView != null)
-                    getRecyclerView().smoothScrollToPosition(position);
-            } else {
-                if (mRecyclerView != null)
-                    getRecyclerView().smoothScrollToPosition(position + 1);
-            }
+//    @Override
+//    public void onScrollStateChanged(int state) {
+//        super.onScrollStateChanged(state);
+//        if (state == RecyclerView.SCROLL_STATE_IDLE) {
+//            View child = getChildAt(0);
+//            int end = helper.getDecoratedEnd(child);
+//            int width = child.getMeasuredWidth();
+//            if (end == 0 || end == width) {
+//                return;
+//            }
+//            int position = getPosition(child);
+//            if (mRecyclerView == null) {
+//                mRecyclerView = getRecyclerView();
+//            }
+//            if (end >= width / 2) {
+//                if (mRecyclerView != null)
+//                    getRecyclerView().smoothScrollToPosition(position);
+//            } else {
+//                if (mRecyclerView != null)
+//                    getRecyclerView().smoothScrollToPosition(position + 1);
+//            }
+//
+//        }
+//    }
 
-        }
+
+
+
+//    private RecyclerView getRecyclerView() {
+//        try {
+//            Field field = RecyclerView.LayoutManager.class.getDeclaredField("mRecyclerView");
+//            field.setAccessible(true);
+//            return (RecyclerView) field.get(this);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+
+    public int findFirstVisibleItemPosition() {
+        final View child = findOneVisibleChild(0, getChildCount(), false, true);
+        return child == null ? NO_POSITION : getPosition(child);
     }
+    View findOneVisibleChild(int fromIndex, int toIndex, boolean completelyVisible,
+                             boolean acceptPartiallyVisible) {
 
-
-
-
-    private RecyclerView getRecyclerView() {
-        try {
-            Field field = RecyclerView.LayoutManager.class.getDeclaredField("mRecyclerView");
-            field.setAccessible(true);
-            return (RecyclerView) field.get(this);
-        } catch (Exception e) {
-            e.printStackTrace();
+        final int start = helper.getStartAfterPadding();
+        final int end = helper.getEndAfterPadding();
+        final int next = toIndex > fromIndex ? 1 : -1;
+        View partiallyVisible = null;
+        for (int i = fromIndex; i != toIndex; i+=next) {
+            final View child = getChildAt(i);
+            final int childStart = helper.getDecoratedStart(child);
+            final int childEnd = helper.getDecoratedEnd(child);
+            if (childStart < end && childEnd > start) {
+                if (completelyVisible) {
+                    if (childStart >= start && childEnd <= end) {
+                        return child;
+                    } else if (acceptPartiallyVisible && partiallyVisible == null) {
+                        partiallyVisible = child;
+                    }
+                } else {
+                    return child;
+                }
+            }
         }
-        return null;
+        return partiallyVisible;
     }
 }
