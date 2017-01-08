@@ -10,6 +10,10 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.DecelerateInterpolator;
 
 /**
  * Created by yangcai on 17-1-7.
@@ -330,7 +334,8 @@ public class WaterDropIndicator extends View {
 
     public void startAnimation(){
         ValueAnimator animator = ValueAnimator.ofFloat(0,1.0f);
-        animator.setDuration(300);
+        animator.setDuration(200);
+        animator.setInterpolator(new AccelerateInterpolator());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
