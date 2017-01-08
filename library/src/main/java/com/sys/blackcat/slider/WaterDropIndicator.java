@@ -3,34 +3,48 @@ package com.sys.blackcat.slider;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.BounceInterpolator;
-import android.view.animation.DecelerateInterpolator;
+
 
 /**
  * Created by yangcai on 17-1-7.
  */
 
-public class WaterDropIndicator extends View {
+public class WaterDropIndicator extends View implements ViewPager.OnPageChangeListener {
+    private final static String TAG = WaterDropIndicator.class.getSimpleName();
 
-    private int colorSelected;
-
-    private int colorUnselected;
-
-    private int waterDropSize;
-
-    private int waterDropSpace;
-
+    //点的大小 也就是直径
+    private float waterDropSize;
+    // 也就是半径
+    private float waterDropRadius;
+    //两个点之间的距离
+    private float waterDropSpace;
+    //点的个数
     private int waterDropCount = 2;
+    //选中点的画笔
+    private Paint selectedPaint;
+    //未选点的画笔
+    private Paint unSelectedPaint;
+    //记录所有点圆心的X坐标
+    private float[] centerXs = new float[0];
+    //记录点圆心的Y坐标
+    private float centerY;
+    //点最顶端的Y坐标
+    private float centerYtop;
+    //点最底端的Y坐标
+    private float centerYBottom;
 
+    private ViewPager viewPager;
 
     public WaterDropIndicator(Context context) {
         this(context, null);
@@ -44,24 +58,116 @@ public class WaterDropIndicator extends View {
         super(context, attrs, defStyleAttr);
         float density = context.getResources().getDisplayMetrics().density;
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.WaterDropIndicator, defStyleAttr, 0);
-        colorSelected = a.getColor(R.styleable.WaterDropIndicator_indicator_selected_color, Color.parseColor("#FF33CC"));
-        colorUnselected = a.getColor(R.styleable.WaterDropIndicator_indicator_unselected_color, Color.parseColor("#FF6699"));
+        //选中的点的颜色
+        int colorSelected = a.getColor(R.styleable.WaterDropIndicator_indicator_selected_color, Color.parseColor("#FF33CC"));
+        //未选中的点的颜色
+        int colorUnselected = a.getColor(R.styleable.WaterDropIndicator_indicator_unselected_color, Color.parseColor("#FF6699"));
         waterDropSize = a.getDimensionPixelSize(R.styleable.WaterDropIndicator_indicator_size, (int) (8 * density));
-        waterDropSpace = a.getDimensionPixelOffset(R.styleable.WaterDropIndicator_indicator_space, (int) (12 * density));
+        waterDropSpace = a.getDimensionPixelSize(R.styleable.WaterDropIndicator_indicator_space, (int) (12 * density));
         a.recycle();
-        initTest();
+        init(colorSelected, colorUnselected);
+    }
+
+    /**
+     * 初始化画笔
+     */
+    private void init(int colorSelected, int colorUnselected) {
+        selectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        selectedPaint.setAntiAlias(true);
+        selectedPaint.setColor(colorSelected);
+        selectedPaint.setStyle(Paint.Style.FILL);
+        unSelectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        unSelectedPaint.setAntiAlias(true);
+        unSelectedPaint.setColor(colorUnselected);
+        unSelectedPaint.setStyle(Paint.Style.FILL);
+        waterDropRadius = waterDropSize / 2;
+        centerYtop = getPaddingTop();
+        centerY = centerYtop + waterDropRadius;
+        centerYBottom = centerYtop + waterDropSize;
+    }
+
+    public void setViewPager(ViewPager viewPager) {
+        this.viewPager = viewPager;
+        setWaterDropCount(viewPager.getAdapter().getCount());
+        this.viewPager.getAdapter().registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                setWaterDropCount(WaterDropIndicator.this.viewPager.getAdapter().getCount());
+            }
+        });
+        this.viewPager.addOnPageChangeListener(this);
     }
 
     @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        Log.d(TAG, "onPageScrolled position " + position);
+        Log.d(TAG, "onPageScrolled positionOffset " + positionOffset);
+        Log.d(TAG, "onPageScrolled positionOffsetPixels " + positionOffsetPixels);
+        Log.d(TAG, "onPageScrolled getCurrentItem " + this.viewPager.getCurrentItem());
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        Log.d(TAG, "onPageSelected position " + position);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+        Log.d(TAG, "onPageScrollStateChanged state " + state);
+    }
+
+
+    private void setWaterDropCount(int waterDropCount) {
+        if (this.waterDropCount == waterDropCount) {
+            return;
+        }
+        this.waterDropCount = waterDropCount;
+        requestLayout();
+    }
+
+    private void drawCircles(Canvas canvas) {
+        Path path = new Path();
+        path.rewind();
+        for (float centerX : centerXs) {
+            path.addCircle(centerX, centerY, waterDropRadius, Path.Direction.CCW);
+        }
+        canvas.drawPath(path, unSelectedPaint);
+    }
+
+    /**
+     * 计算所有点的中心坐标的X坐标 所有点居中显示
+     */
+    private void calculationCenterXs() {
+        //画完所有点需要的宽度
+        float dotWidth = waterDropCount * waterDropSize + (waterDropCount - 1) * waterDropSpace;
+        //横向 中心点X坐标
+        float px = getMeasuredWidth() / 2;
+        //第一个点圆心的X坐标
+        float startPx = px - dotWidth / 2 + waterDropSize / 2 + getPaddingLeft();
+        centerXs = new float[waterDropCount];
+        for (int i = 0; i < waterDropCount; i++) {
+            centerXs[i] = startPx + i * (waterDropSpace + waterDropSize);
+        }
+    }
+
+    //计算高度 圆的直径+ paddingtop + paddingbottom
+    //宽度始终 match_parent
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int height = waterDropSize + getPaddingTop() + getPaddingBottom();
+        int height = (int) (waterDropSize + getPaddingTop() + getPaddingBottom());
         setMeasuredDimension(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+        calculationCenterXs();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        drawTest(canvas);
+        //   drawTest(canvas);
+        if (centerXs.length == 0) {
+            return;
+        }
+        drawCircles(canvas);
     }
 
     //Test
@@ -75,9 +181,9 @@ public class WaterDropIndicator extends View {
         testPaint = new Paint();
         testPaint.setStyle(Paint.Style.FILL);
         testPaint.setAntiAlias(true);
-        testPaint.setColor(colorSelected);
-        px = getPaddingLeft() + waterDropSize / 2;
-        py = getPaddingTop() + waterDropSize / 2;
+        testPaint.setColor(Color.RED);
+        px = (int) (getPaddingLeft() + waterDropSize / 2);
+        py = (int) (getPaddingTop() + waterDropSize / 2);
         testPath = new Path();
 
         resetTestPath();
@@ -146,7 +252,7 @@ public class WaterDropIndicator extends View {
 
 
     private int getPxByPosition(int position) {
-        return px + (waterDropSpace + waterDropSize) * position;
+        return (int) (px + (waterDropSpace + waterDropSize) * position);
     }
 
 
@@ -325,15 +431,17 @@ public class WaterDropIndicator extends View {
         canvas.drawPath(mergePath, testPaint);
         drawScale(canvas);
     }
+
     private Path scalePath = new Path();
+
     private void drawScale(Canvas canvas) {
         scalePath.rewind();
         scalePath.addCircle(getPxByPosition(3), py, waterDropSize / 2 * directionMerge, Path.Direction.CCW);
         canvas.drawPath(scalePath, testPaint);
     }
 
-    public void startAnimation(){
-        ValueAnimator animator = ValueAnimator.ofFloat(0,1.0f);
+    public void startAnimation() {
+        ValueAnimator animator = ValueAnimator.ofFloat(0, 1.0f);
         animator.setDuration(200);
         animator.setInterpolator(new AccelerateInterpolator());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -354,4 +462,6 @@ public class WaterDropIndicator extends View {
         float bottom = py + waterDropSize / 2;
         return new RectF(left, top, right, bottom);
     }
+
+
 }
