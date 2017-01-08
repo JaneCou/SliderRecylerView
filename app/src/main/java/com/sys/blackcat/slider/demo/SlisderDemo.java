@@ -1,15 +1,12 @@
 package com.sys.blackcat.slider.demo;
 
-import android.app.ActivityOptions;
-import android.content.Intent;
+
 import android.os.Bundle;
-import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
+
 
 import com.sys.blackcat.slider.SliderManager;
 

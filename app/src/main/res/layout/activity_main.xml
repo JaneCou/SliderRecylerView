@@ -20,5 +20,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center" />
+    <Button
+        android:onClick="pathClick"
+        android:text="pathClick"
+        android:textAllCaps="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
 
+
+    <Button
+        android:onClick="waterClick"
+        android:text="waterClick"
+        android:textAllCaps="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
 </LinearLayout>
