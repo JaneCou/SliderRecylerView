@@ -18,4 +18,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="1000" />
+
+    <Button
+        android:text="merge"
+        android:onClick="mergeClick"
+        android:layout_width="match_parent"
+        android:textAllCaps="false"
+        android:layout_height="wrap_content" />
 </LinearLayout>

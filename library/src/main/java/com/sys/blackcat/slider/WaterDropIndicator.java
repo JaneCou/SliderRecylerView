@@ -1,5 +1,6 @@
 package com.sys.blackcat.slider;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -153,13 +154,14 @@ public class WaterDropIndicator extends View {
         if (directionJF < 0.5) {
             drawRightCp(canvas);
             drawLeftCp(canvas);
-        } else if ( directionJF>=.5&& directionJF <1){
+        } else if (directionJF >= .5 && directionJF < 1) {
             drawPathRight(canvas);
             drawPathLeft(canvas);
-        }else if (directionJF ==1){
+        } else if (directionJF == 1) {
             canvas.drawPath(testPath, testPaint);
         }
 
+        drawMerge(canvas);
     }
 
 
@@ -269,7 +271,7 @@ public class WaterDropIndicator extends View {
         float right = getPxByPosition(1) + waterDropSize / 2;
         float bottom = py + waterDropSize / 2;
         RectF mRectF = new RectF(left, top, right, bottom);
-       // drawLeft.moveTo(getPxByPosition(0), bottom);
+        // drawLeft.moveTo(getPxByPosition(0), bottom);
         drawLeft.arcTo(mRectF, 270, 180, true);
 
 
@@ -300,9 +302,51 @@ public class WaterDropIndicator extends View {
 
 
     private float directionJF = 0;
+    private float directionMerge = 0;
 
     public void setDirectionJF(float directionJF) {
         this.directionJF = directionJF;
         postInvalidate();
+    }
+
+    // 3 4
+    private Path mergePath = new Path();
+
+    private void drawMerge(Canvas canvas) {
+        mergePath.rewind();
+        float dotPx = getPxByPosition(3) + directionMerge * (waterDropSpace + waterDropSize);
+        mergePath.arcTo(getRect(dotPx), 90, 180, true);
+        mergePath.arcTo(getRect(getPxByPosition(4)), 270, 180, true);
+        mergePath.addRect(dotPx, getPaddingTop(), getPxByPosition(4), py + waterDropSize / 2, Path.Direction.CCW);
+        canvas.drawPath(mergePath, testPaint);
+        drawScale(canvas);
+    }
+    private Path scalePath = new Path();
+    private void drawScale(Canvas canvas) {
+        scalePath.rewind();
+        scalePath.addCircle(getPxByPosition(3), py, waterDropSize / 2 * directionMerge, Path.Direction.CCW);
+        canvas.drawPath(scalePath, testPaint);
+    }
+
+    public void startAnimation(){
+        ValueAnimator animator = ValueAnimator.ofFloat(0,1.0f);
+        animator.setDuration(300);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                directionMerge = (float) animation.getAnimatedValue();
+                postInvalidate();
+            }
+        });
+        animator.start();
+    }
+
+
+    private RectF getRect(float dotPx) {
+        float left = dotPx - waterDropSize / 2;
+        float top = getPaddingTop();
+        float right = dotPx + waterDropSize / 2;
+        float bottom = py + waterDropSize / 2;
+        return new RectF(left, top, right, bottom);
     }
 }

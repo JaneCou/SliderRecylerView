@@ -3,6 +3,7 @@ package com.sys.blackcat.slider.demo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.SeekBar;
 
 import com.sys.blackcat.slider.WaterDropIndicator;
@@ -36,5 +37,10 @@ public class WaterDropDemo extends AppCompatActivity {
 
             }
         });
+    }
+
+
+    public void mergeClick(View view ){
+        indicator.startAnimation();
     }
 }
