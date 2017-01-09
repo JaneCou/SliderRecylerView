@@ -1,40 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <RelativeLayout
+    <android.support.v4.view.ViewPager
+        android:id="@+id/vp_page"
         android:layout_width="match_parent"
-        android:layout_height="300dp">
+        android:layout_height="match_parent" />
 
-        <android.support.v4.view.ViewPager
-            android:id="@+id/vp_page"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <com.sys.blackcat.slider.WaterDropIndicator
-            android:id="@+id/water_drop"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:indicator_size="8dp"
-            app:indicator_space="20dp" />
-    </RelativeLayout>
-
-
-    <SeekBar
-        android:id="@+id/seekbar"
+    <com.sys.blackcat.slider.WaterDropIndicator
+        android:id="@+id/water_drop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:max="1000" />
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp"
+        app:indicator_selected_color="#f9f900"
+        app:indicator_size="8dp"
+        app:indicator_space="12dp"
+        app:indicator_unselected_color="#88FFFFFF" />
+</RelativeLayout>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="mergeClick"
-        android:text="merge"
-        android:textAllCaps="false" />
-</LinearLayout>
+
+

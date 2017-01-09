@@ -1,5 +1,6 @@
 package com.sys.blackcat.slider;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -11,7 +12,6 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 
@@ -43,8 +43,16 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
     private float centerYtop;
     //点最底端的Y坐标
     private float centerYBottom;
+    //viewpage 移动的位置
+    private float pageOffset;
+
+    private int currentPosition = 0;
+    private int nextPosition = 0;
+    private float directionMerge;
 
     private ViewPager viewPager;
+    private int scrollState;
+    private boolean anim = false;
 
     public WaterDropIndicator(Context context) {
         this(context, null);
@@ -101,20 +109,43 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
 
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        Log.d(TAG, "onPageScrolled position " + position);
-        Log.d(TAG, "onPageScrolled positionOffset " + positionOffset);
-        Log.d(TAG, "onPageScrolled positionOffsetPixels " + positionOffsetPixels);
-        Log.d(TAG, "onPageScrolled getCurrentItem " + this.viewPager.getCurrentItem());
+        if (scrollState == ViewPager.SCROLL_STATE_DRAGGING) {
+            anim = false;
+        }
+        if (anim) {
+            return;
+        }
+        if (positionOffset == 0) {
+            return;
+        }
+        if (scrollState == ViewPager.SCROLL_STATE_DRAGGING) {
+            currentPosition = viewPager.getCurrentItem();
+            if (position == currentPosition) {
+                nextPosition = currentPosition + 1;
+            } else {
+                nextPosition = currentPosition - 1;
+            }
+        }
+        if (position == currentPosition) {
+            pageOffset = positionOffset;
+        } else {
+            pageOffset = 1f - positionOffset;
+        }
+        postInvalidate();
     }
 
     @Override
     public void onPageSelected(int position) {
-        Log.d(TAG, "onPageSelected position " + position);
+        startAnimation();
+        anim = true;
     }
 
     @Override
     public void onPageScrollStateChanged(int state) {
-        Log.d(TAG, "onPageScrollStateChanged state " + state);
+        scrollState = state;
+        if (state == ViewPager.SCROLL_STATE_IDLE) {
+            anim = false;
+        }
     }
 
 
@@ -124,15 +155,6 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         }
         this.waterDropCount = waterDropCount;
         requestLayout();
-    }
-
-    private void drawCircles(Canvas canvas) {
-        Path path = new Path();
-        path.rewind();
-        for (float centerX : centerXs) {
-            path.addCircle(centerX, centerY, waterDropRadius, Path.Direction.CCW);
-        }
-        canvas.drawPath(path, unSelectedPaint);
     }
 
     /**
@@ -167,280 +189,212 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         if (centerXs.length == 0) {
             return;
         }
-        drawCircles(canvas);
+        if (directionMerge != 0) {
+            drawCircles(canvas, nextPosition, currentPosition);
+            if (currentPosition > nextPosition) {
+                drawMergeLeftByPosition(canvas, nextPosition, currentPosition);
+            } else {
+                drawMergeRightByPosition(canvas, currentPosition, nextPosition);
+            }
+            return;
+        }
+        if (pageOffset == 0 || pageOffset == 1) {
+            drawCircles(canvas);
+        } else if (0 < pageOffset && pageOffset < 0.5) {
+            drawCircles(canvas, nextPosition, currentPosition);
+            if (currentPosition > nextPosition) {
+                drawRightByPosition(canvas, nextPosition);
+                drawLeftByPosition(canvas, currentPosition);
+            } else {
+                drawRightByPosition(canvas, currentPosition);
+                drawLeftByPosition(canvas, nextPosition);
+            }
+        } else if (pageOffset >= 0.5 && pageOffset < 1) {
+            if (currentPosition > nextPosition) {
+                drawRightByPosition(canvas, nextPosition, currentPosition);
+                drawLeftByPosition(canvas, nextPosition, currentPosition);
+            } else {
+                drawRightByPosition(canvas, currentPosition, nextPosition);
+                drawLeftByPosition(canvas, currentPosition, nextPosition);
+            }
+            drawCircles(canvas, nextPosition, currentPosition);
+        }
+        drawSelectByPosition(canvas, centerXs[currentPosition]);
     }
 
-    //Test
-    private Path testPath = new Path();
-    private Paint testPaint = new Paint();
-
-    int px;
-    int py;
-
-    private void initTest() {
-        testPaint = new Paint();
-        testPaint.setStyle(Paint.Style.FILL);
-        testPaint.setAntiAlias(true);
-        testPaint.setColor(Color.RED);
-        px = (int) (getPaddingLeft() + waterDropSize / 2);
-        py = (int) (getPaddingTop() + waterDropSize / 2);
-        testPath = new Path();
-
-        resetTestPath();
+    /**
+     * 是否包括 value
+     *
+     * @param arrays 指定的数组
+     * @param value  指定的值
+     * @return true 包含 false 不包含
+     */
+    private boolean arraysContains(int[] arrays, int value) {
+        for (int position : arrays) {
+            if (position == value) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private void resetTestPath() {
+
+
+    private void drawSelectByPosition(Canvas canvas, float centerX) {
+        Path path = new Path();
+        path.rewind();
+        path.addCircle(centerX, centerY, waterDropRadius, Path.Direction.CCW);
+        canvas.drawPath(path, selectedPaint);
+    }
+
+
+    //0
+    private void drawCircles(Canvas canvas, int... exceptPosition) {
+        Path path = new Path();
+        path.rewind();
         for (int i = 0; i < waterDropCount; i++) {
-            testPath.addCircle(getPxByPosition(i), py, waterDropSize / 2, Path.Direction.CCW);
+            if (!arraysContains(exceptPosition, i)) {
+                float centerX = centerXs[i];
+                path.addCircle(centerX, centerY, waterDropRadius, Path.Direction.CCW);
+            }
         }
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-
-    private void drawLeft(Canvas canvas) {
-//        Path left = new Path();
-//        left.moveTo(getPxByPosition(0), getPaddingTop());
-//        left.quadTo(getPxByPosition(1), py, getPxByPosition(0), py + waterDropSize / 2);
-//        canvas.drawPath(left, testPaint);
-
-        // cubic to the right middle
-        float centerX = getPxByPosition(0);
-        float dotRadius = waterDropSize;
-        float halfDotRadius = dotRadius / 2;
-        float dotCenterY = py;
-        float dotTopY = getPaddingTop();
-        float endX1 = centerX + dotRadius + (0.5f * waterDropSpace);
-        float endY1 = dotCenterY;
-        float controlX1 = centerX + halfDotRadius;
-        float controlY1 = dotTopY;
+    //0-0.5
+    private void drawRightByPosition(Canvas canvas, int position) {
+        Path path = new Path();
+        path.rewind();
+        RectF mRectF = new RectF(centerXs[position] - waterDropRadius, centerYtop, centerXs[position] + waterDropRadius, centerYBottom);
+        path.moveTo(centerXs[position], centerYBottom);
+        path.arcTo(mRectF, 90, 180, true);
+        float endX1 = centerXs[position] + waterDropRadius + waterDropSpace * pageOffset;
+        float endY1 = centerY;
+        float controlX1 = centerXs[position] + waterDropRadius / 2;
+        float controlY1 = centerYtop;
         float controlX2 = endX1;
-        float controlY2 = endY1 - halfDotRadius;
-        Path unselectedDotLeftPath1 = new Path();
-        unselectedDotLeftPath1.moveTo(getPxByPosition(0), py + waterDropSize);
-        unselectedDotLeftPath1.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX1, endY1);
-
-        // cubic back to the bottom center
-        float dotBottomY = py + waterDropSize;
-        float endX2 = centerX;
-        float endY2 = dotBottomY;
+        float controlY2 = endY1 - waterDropRadius / 2;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
+        float endX2 = centerXs[position];
+        float endY2 = centerYBottom;
         controlX1 = endX1;
-        controlY1 = endY1 + halfDotRadius;
-        controlX2 = centerX + halfDotRadius;
-        controlY2 = dotBottomY;
-        Path unselectedDotLeftPath = new Path();
-        unselectedDotLeftPath.moveTo(getPxByPosition(0), py + waterDropSize);
-        unselectedDotLeftPath.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX2, endY2);
-        canvas.drawPath(unselectedDotLeftPath1, testPaint);
-        // canvas.drawPath(unselectedDotLeftPath,testPaint);
+        controlY1 = endY1 + waterDropRadius / 2;
+        controlX2 = centerXs[position] + waterDropRadius / 2;
+        controlY2 = centerY + waterDropRadius;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-    private void drawRight(Canvas canvas) {
-        Path left = new Path();
-        left.moveTo(getPxByPosition(1), getPaddingTop());
-        left.quadTo(getPxByPosition(0), py, getPxByPosition(1), py + waterDropSize / 2);
-        canvas.drawPath(left, testPaint);
-    }
-
-    private int getCenterXbyTwoPosition(int p1, int p2) {
-        int px1 = getPxByPosition(p1);
-        int px2 = getPxByPosition(p2);
-        return (px1 + px2) / 2;
-    }
-
-
-    private int getPxByPosition(int position) {
-        return (int) (px + (waterDropSpace + waterDropSize) * position);
-    }
-
-
-    private void drawTest(Canvas canvas) {
-//        canvas.drawPath(testPath, testPaint);
-//        drawLeft(canvas);
-//      //  drawRight(canvas);
-
-        if (directionJF < 0.5) {
-            drawRightCp(canvas);
-            drawLeftCp(canvas);
-        } else if (directionJF >= .5 && directionJF < 1) {
-            drawPathRight(canvas);
-            drawPathLeft(canvas);
-        } else if (directionJF == 1) {
-            canvas.drawPath(testPath, testPaint);
-        }
-
-        drawMerge(canvas);
-    }
-
-
-    private Path pathRight = new Path();
-
-    private void drawRightCp(Canvas canvas) {
-        pathRight.rewind();
-        float left = getPxByPosition(0) - waterDropSize / 2;
-        float top = getPaddingTop();
-        float right = getPxByPosition(0) + waterDropSize / 2;
-        float bottom = py + waterDropSize / 2;
-        RectF mRectF = new RectF(left, top, right, bottom);
-        pathRight.moveTo(getPxByPosition(0), bottom);
-        pathRight.arcTo(mRectF, 90, 180, true);
-        float endX1 = getPxByPosition(0) + waterDropSize / 2 + waterDropSpace * directionJF;
-        float endY1 = py;
-        float controlX1 = getPxByPosition(0) + waterDropSize / 4;
-        float controlY1 = getPaddingTop();
+    //0-0.5
+    private void drawLeftByPosition(Canvas canvas, int position) {
+        Path path = new Path();
+        path.rewind();
+        RectF mRectF = new RectF(centerXs[position] - waterDropRadius, centerYtop, centerXs[position] + waterDropRadius, centerYBottom);
+        path.moveTo(centerXs[position], centerYBottom);
+        path.arcTo(mRectF, 90, -180, true);
+        float endX1 = centerXs[position] - waterDropRadius - waterDropSpace * pageOffset;
+        float endY1 = centerY;
+        float controlX1 = centerXs[position] - waterDropRadius / 2;
+        float controlY1 = centerYtop;
         float controlX2 = endX1;
-        float controlY2 = endY1 - waterDropSize / 4;
-        pathRight.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
-        float endX2 = getPxByPosition(0);
-        float endY2 = bottom;
+        float controlY2 = endY1 - waterDropRadius / 2;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
+        float endX2 = centerXs[position];
+        float endY2 = centerYBottom;
         controlX1 = endX1;
-        controlY1 = endY1 + waterDropSize / 4;
-        controlX2 = getPxByPosition(0) + waterDropSize / 4;
-        controlY2 = py + waterDropSize / 2;
-        pathRight.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
-        canvas.drawPath(pathRight, testPaint);
+        controlY1 = endY1 + waterDropRadius / 2;
+        controlX2 = centerXs[position] - waterDropRadius / 2;
+        controlY2 = centerY + waterDropRadius;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-    private Path pathLeft = new Path();
-
-    private void drawLeftCp(Canvas canvas) {
-        pathLeft.rewind();
-        float left = getPxByPosition(1) - waterDropSize / 2;
-        float top = getPaddingTop();
-        float right = getPxByPosition(1) + waterDropSize / 2;
-        float bottom = py + waterDropSize / 2;
-        RectF mRectF = new RectF(left, top, right, bottom);
-        pathLeft.moveTo(getPxByPosition(1), bottom);
-        pathLeft.arcTo(mRectF, 90, -180, true);
-        float endX1 = getPxByPosition(1) - waterDropSize / 2 - waterDropSpace * directionJF;
-        float endY1 = py;
-        float controlX1 = getPxByPosition(1) - waterDropSize / 4;
-        float controlY1 = getPaddingTop();
-        float controlX2 = endX1;
-        float controlY2 = endY1 - waterDropSize / 4;
-        pathLeft.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
-        float endX2 = getPxByPosition(1);
-        float endY2 = bottom;
-        controlX1 = endX1;
-        controlY1 = endY1 + waterDropSize / 4;
-        controlX2 = getPxByPosition(1) - waterDropSize / 4;
-        controlY2 = py + waterDropSize / 2;
-        pathLeft.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
-        canvas.drawPath(pathLeft, testPaint);
-    }
-
-
-    private Path drawRight = new Path();
-
-    private void drawPathRight(Canvas canvas) {
-        drawRight.rewind();
-        // case #3 – Joining neighbour, combined curved
-
-        // adjust the fraction so that it goes from 0.3 -> 1 to produce a more realistic 'join'
-        float adjustedFraction = (directionJF - 0.2f) * 1.25f;
-        float left = getPxByPosition(0) - waterDropSize / 2;
-        float top = getPaddingTop();
-        float right = getPxByPosition(0) + waterDropSize / 2;
-        float bottom = py + waterDropSize / 2;
-        RectF mRectF = new RectF(left, top, right, bottom);
-        drawRight.moveTo(getPxByPosition(0), bottom);
-        drawRight.arcTo(mRectF, 90, 180, true);
-
-        // bezier to the middle top of the join
-        float endX1 = getPxByPosition(0) + waterDropSize / 2 + (waterDropSpace / 2);
-        float endY1 = py - (adjustedFraction * waterDropSize / 2);
-        float controlX1 = endX1 - (adjustedFraction * waterDropSize / 2);
-        float controlY1 = getPaddingTop();
-        float controlX2 = endX1 - ((1 - adjustedFraction) * waterDropSize / 2);
+    //0.5-1
+    private void drawRightByPosition(Canvas canvas, int p1, int p2) {
+        Path path = new Path();
+        path.rewind();
+        float adjustedFraction = (pageOffset - 0.2f) * 1.25f;
+        RectF mRectF = new RectF(centerXs[p1] - waterDropRadius, centerYtop, centerXs[p1] + waterDropRadius, centerYBottom);
+        path.moveTo(centerXs[p1], centerYBottom);
+        path.arcTo(mRectF, 90, 180, true);
+        float endX1 = centerXs[p1] + waterDropRadius + (waterDropSpace / 2);
+        float endY1 = centerY - (adjustedFraction * waterDropRadius);
+        float controlX1 = endX1 - (adjustedFraction * waterDropRadius);
+        float controlY1 = centerYtop;
+        float controlX2 = endX1 - ((1 - adjustedFraction) * waterDropRadius);
         float controlY2 = endY1;
-        drawRight.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX1, endY1);
-        // bezier to the top right of the join
-        float endX2 = getPxByPosition(1);
-        float endY2 = getPaddingTop();
-        controlX1 = endX1 + ((1 - adjustedFraction) * waterDropSize / 2);
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
+        float endX2 = centerXs[p2];
+        float endY2 = centerYtop;
+        controlX1 = endX1 + ((1 - adjustedFraction) * waterDropRadius);
         controlY1 = endY1;
-        controlX2 = endX1 + (adjustedFraction * waterDropSize / 2);
-        controlY2 = getPaddingTop();
-        drawRight.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX2, endY2);
-        canvas.drawPath(drawRight, testPaint);
+        controlX2 = endX1 + (adjustedFraction * waterDropRadius);
+        controlY2 = centerYtop;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-    private Path drawLeft = new Path();
-
-    private void drawPathLeft(Canvas canvas) {
-        drawLeft.rewind();
-        float adjustedFraction = (directionJF - 0.2f) * 1.25f;
-        float left = getPxByPosition(1) - waterDropSize / 2;
-        float top = getPaddingTop();
-        float right = getPxByPosition(1) + waterDropSize / 2;
-        float bottom = py + waterDropSize / 2;
-        RectF mRectF = new RectF(left, top, right, bottom);
-        // drawLeft.moveTo(getPxByPosition(0), bottom);
-        drawLeft.arcTo(mRectF, 270, 180, true);
-
-
-        // bezier to the middle bottom of the join
-        // endX1 stays the same
-        float endX1 = getPxByPosition(0) + waterDropSize / 2 + (waterDropSpace / 2);
-        float endY1 = py + (adjustedFraction * waterDropSize / 2);
-        float controlX1 = endX1 + (adjustedFraction * waterDropSize / 2);
-        float controlY1 = bottom;
-        float controlX2 = endX1 + ((1 - adjustedFraction) * waterDropSize / 2);
+    //0.5-1
+    private void drawLeftByPosition(Canvas canvas, int p1, int p2) {
+        Path path = new Path();
+        path.rewind();
+        float adjustedFraction = (pageOffset - 0.2f) * 1.25f;
+        RectF mRectF = new RectF(centerXs[p2] - waterDropRadius, centerYtop, centerXs[p2] + waterDropRadius, centerYBottom);
+        path.arcTo(mRectF, 270, 180, true);
+        float endX1 = centerXs[p1] + waterDropRadius + (waterDropSpace / 2);
+        float endY1 = centerY + (adjustedFraction * waterDropRadius);
+        float controlX1 = endX1 + (adjustedFraction * waterDropRadius);
+        float controlY1 = centerYBottom;
+        float controlX2 = endX1 + ((1 - adjustedFraction) * waterDropRadius);
         float controlY2 = endY1;
-        drawLeft.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX1, endY1);
-
-        // bezier back to the start point in the bottom left
-        float endX2 = getPxByPosition(0);
-        float endY2 = bottom;
-        controlX1 = endX1 - ((1 - adjustedFraction) * waterDropSize / 2);
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX1, endY1);
+        float endX2 = centerXs[p1];
+        float endY2 = centerYBottom;
+        controlX1 = endX1 - ((1 - adjustedFraction) * waterDropRadius);
         controlY1 = endY1;
-        controlX2 = endX1 - (adjustedFraction * waterDropSize / 2);
+        controlX2 = endX1 - (adjustedFraction * waterDropRadius);
         controlY2 = endY2;
-        drawLeft.cubicTo(controlX1, controlY1,
-                controlX2, controlY2,
-                endX2, endY2);
-        canvas.drawPath(drawLeft, testPaint);
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, endX2, endY2);
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-
-    private float directionJF = 0;
-    private float directionMerge = 0;
-
-    public void setDirectionJF(float directionJF) {
-        this.directionJF = directionJF;
-        postInvalidate();
+    //1
+    private void drawMergeRightByPosition(Canvas canvas, int p1, int p2) {
+        Path path = new Path();
+        path.rewind();
+        float dotPx = centerXs[p1] + directionMerge * (waterDropSpace + waterDropSize);
+        RectF mRectF1 = new RectF(dotPx - waterDropRadius, centerYtop, dotPx + waterDropRadius, centerYBottom);
+        RectF mRectF2 = new RectF(centerXs[p2] - waterDropRadius, centerYtop, centerXs[p2] + waterDropRadius, centerYBottom);
+        path.arcTo(mRectF1, 90, 180, true);
+        path.arcTo(mRectF2, 270, 180, true);
+        path.addRect(dotPx, centerYtop, centerXs[p2], centerYBottom, Path.Direction.CCW);
+        canvas.drawPath(path, unSelectedPaint);
+        drawScaleByPosition(canvas, p1);
+        drawSelectByPosition(canvas,dotPx);
     }
 
-    // 3 4
-    private Path mergePath = new Path();
-
-    private void drawMerge(Canvas canvas) {
-        mergePath.rewind();
-        float dotPx = getPxByPosition(3) + directionMerge * (waterDropSpace + waterDropSize);
-        mergePath.arcTo(getRect(dotPx), 90, 180, true);
-        mergePath.arcTo(getRect(getPxByPosition(4)), 270, 180, true);
-        mergePath.addRect(dotPx, getPaddingTop(), getPxByPosition(4), py + waterDropSize / 2, Path.Direction.CCW);
-        canvas.drawPath(mergePath, testPaint);
-        drawScale(canvas);
+    private void drawMergeLeftByPosition(Canvas canvas, int p1, int p2) {
+        Path path = new Path();
+        path.rewind();
+        float dotPx = centerXs[p2] - directionMerge * (waterDropSpace + waterDropSize);
+        RectF mRectF1 = new RectF(dotPx - waterDropRadius, centerYtop, dotPx + waterDropRadius, centerYBottom);
+        RectF mRectF2 = new RectF(centerXs[p1] - waterDropRadius, centerYtop, centerXs[p1] + waterDropRadius, centerYBottom);
+        path.arcTo(mRectF1, 270, 180, true);
+        path.arcTo(mRectF2, 90, 180, true);
+        path.addRect(dotPx, centerYtop, centerXs[p1], centerYBottom, Path.Direction.CCW);
+        canvas.drawPath(path, unSelectedPaint);
+        drawScaleByPosition(canvas, p2);
+        drawSelectByPosition(canvas,dotPx);
     }
 
-    private Path scalePath = new Path();
-
-    private void drawScale(Canvas canvas) {
-        scalePath.rewind();
-        scalePath.addCircle(getPxByPosition(3), py, waterDropSize / 2 * directionMerge, Path.Direction.CCW);
-        canvas.drawPath(scalePath, testPaint);
+    private void drawScaleByPosition(Canvas canvas, int position) {
+        Path path = new Path();
+        path.rewind();
+        path.addCircle(centerXs[position], centerY, waterDropSize / 2 * directionMerge, Path.Direction.CCW);
+        canvas.drawPath(path, unSelectedPaint);
     }
 
-    public void startAnimation() {
+    private void startAnimation() {
         ValueAnimator animator = ValueAnimator.ofFloat(0, 1.0f);
         animator.setDuration(200);
         animator.setInterpolator(new AccelerateInterpolator());
@@ -451,17 +405,31 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
                 postInvalidate();
             }
         });
+        animator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                directionMerge = 0;
+                pageOffset = 0;
+                currentPosition = nextPosition;
+                postInvalidate();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
         animator.start();
     }
-
-
-    private RectF getRect(float dotPx) {
-        float left = dotPx - waterDropSize / 2;
-        float top = getPaddingTop();
-        float right = dotPx + waterDropSize / 2;
-        float bottom = py + waterDropSize / 2;
-        return new RectF(left, top, right, bottom);
-    }
-
 
 }

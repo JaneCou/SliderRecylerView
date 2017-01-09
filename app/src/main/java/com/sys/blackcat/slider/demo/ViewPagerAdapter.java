@@ -13,12 +13,12 @@ import android.widget.ImageView;
 public class ViewPagerAdapter extends PagerAdapter {
 
     private int data[] = {
-            R.mipmap.a1, R.mipmap.a7, R.mipmap.a13,
-            R.mipmap.a2, R.mipmap.a8, R.mipmap.a14,
-            R.mipmap.a3, R.mipmap.a9, R.mipmap.a15,
-//            R.mipmap.a4, R.mipmap.a10, R.mipmap.a16,
-//            R.mipmap.a5, R.mipmap.a11, R.mipmap.a17,
-//            R.mipmap.a6, R.mipmap.a12, R.mipmap.a18
+            R.drawable.a1, R.drawable.a7, R.drawable.a13,
+            R.drawable.a2, R.drawable.a8, R.drawable.a14,
+            R.drawable.a3, R.drawable.a9, R.drawable.a15,
+//            R.drawable.a4, R.drawable.a10, R.drawable.a16,
+//            R.drawable.a5, R.drawable.a11, R.drawable.a17,
+//            R.drawable.a6, R.drawable.a12, R.drawable.a18
     };
 
     @Override
@@ -32,7 +32,7 @@ public class ViewPagerAdapter extends PagerAdapter {
         LayoutInflater inflater = LayoutInflater.from(container.getContext());
         ImageView view = (ImageView) inflater.inflate(R.layout.item, container, false);
         view.setImageResource(data[position]);
-        view.setScaleType(ImageView.ScaleType.FIT_XY);
+        view.setScaleType(ImageView.ScaleType.CENTER_CROP);
         container.addView(view);
         return view;
     }
