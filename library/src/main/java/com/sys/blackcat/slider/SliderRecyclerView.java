@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -62,8 +61,6 @@ public class SliderRecyclerView extends RecyclerView {
     }
 
     public boolean fling(int velocityX, int velocityY) {
-        Log.d("---->", "velocityY " + velocityY);
-        Log.d("---->", "velocityX " + velocityX);
         LayoutManager layoutManager = getLayoutManager();
         if (layoutManager.canScrollHorizontally() && Math.abs(velocityX) < getMinFlingVelocity() * 2) {
             return false;

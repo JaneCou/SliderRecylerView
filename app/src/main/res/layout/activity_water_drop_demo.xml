@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_margin="10dp"
-        app:indicator_selected_color="#f9f900"
+        app:indicator_selected_color="#22aeff"
         app:indicator_size="8dp"
         app:indicator_space="12dp"
         app:indicator_unselected_color="#88FFFFFF" />
