@@ -45,13 +45,15 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
     private float centerYBottom;
     //viewpage 移动的位置
     private float pageOffset;
-
+    //当前的page
     private int currentPosition = 0;
+    //滑动时 将要滑到的下一个page
     private int nextPosition = 0;
     private float directionMerge;
-
     private ViewPager viewPager;
+    //记录滑动状态
     private int scrollState;
+    //是否开启了选择的的位移动画
     private boolean anim = false;
 
     public WaterDropIndicator(Context context) {
@@ -120,15 +122,15 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         }
         if (scrollState == ViewPager.SCROLL_STATE_DRAGGING) {
             currentPosition = viewPager.getCurrentItem();
-            if (position == currentPosition) {
+            if (position == currentPosition) {//相等表示手指从右往左滑动
                 nextPosition = currentPosition + 1;
-            } else {
+            } else {//不相等表示手指从左往右滑动
                 nextPosition = currentPosition - 1;
             }
         }
         if (position == currentPosition) {
             pageOffset = positionOffset;
-        } else {
+        } else {//不相等时 position 的值是递减的，但是我们需要一个递增的值 所有...
             pageOffset = 1f - positionOffset;
         }
         postInvalidate();
