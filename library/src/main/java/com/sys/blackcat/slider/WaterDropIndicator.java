@@ -148,7 +148,6 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         }
     }
 
-
     private void setWaterDropCount(int waterDropCount) {
         if (this.waterDropCount == waterDropCount) {
             return;
@@ -238,8 +237,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         return false;
     }
 
-
-
+    /**
+     * 画选中的圆
+     */
     private void drawSelectByPosition(Canvas canvas, float centerX) {
         Path path = new Path();
         path.rewind();
@@ -247,8 +247,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, selectedPaint);
     }
 
-
-    //0
+    /**
+     * 画未选中的圆  pageoffset==0
+     */
     private void drawCircles(Canvas canvas, int... exceptPosition) {
         Path path = new Path();
         path.rewind();
@@ -261,7 +262,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
-    //0-0.5
+    /**
+     * 画点点右边凸起的贝塞尔曲线图 画选中的圆  pageoffset>0 && pageoffset<0.5
+     */
     private void drawRightByPosition(Canvas canvas, int position) {
         Path path = new Path();
         path.rewind();
@@ -285,7 +288,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
-    //0-0.5
+    /**
+     * 画点点左边边凸起的贝塞尔曲线图 画选中的圆 pageoffset>0 && pageoffset<0.5
+     */
     private void drawLeftByPosition(Canvas canvas, int position) {
         Path path = new Path();
         path.rewind();
@@ -309,7 +314,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
-    //0.5-1
+    /**
+     * 画点点右边凸起的贝塞尔曲线图 画选中的圆  pageoffset>=0.5 && pageoffset<1
+     */
     private void drawRightByPosition(Canvas canvas, int p1, int p2) {
         Path path = new Path();
         path.rewind();
@@ -334,7 +341,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
-    //0.5-1
+    /**
+     * 画点点左边边凸起的贝塞尔曲线图 画选中的圆 pageoffset>=0.5 && pageoffset<1
+     */
     private void drawLeftByPosition(Canvas canvas, int p1, int p2) {
         Path path = new Path();
         path.rewind();
@@ -358,7 +367,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
-    //1
+    /**
+     * 指定点的右移
+     */
     private void drawMergeRightByPosition(Canvas canvas, int p1, int p2) {
         Path path = new Path();
         path.rewind();
@@ -370,9 +381,12 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         path.addRect(dotPx, centerYtop, centerXs[p2], centerYBottom, Path.Direction.CCW);
         canvas.drawPath(path, unSelectedPaint);
         drawScaleByPosition(canvas, p1);
-        drawSelectByPosition(canvas,dotPx);
+        drawSelectByPosition(canvas, dotPx);
     }
 
+    /**
+     * 指定点的左移
+     */
     private void drawMergeLeftByPosition(Canvas canvas, int p1, int p2) {
         Path path = new Path();
         path.rewind();
@@ -384,9 +398,12 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         path.addRect(dotPx, centerYtop, centerXs[p1], centerYBottom, Path.Direction.CCW);
         canvas.drawPath(path, unSelectedPaint);
         drawScaleByPosition(canvas, p2);
-        drawSelectByPosition(canvas,dotPx);
+        drawSelectByPosition(canvas, dotPx);
     }
 
+    /**
+     * 指定点的放大
+     */
     private void drawScaleByPosition(Canvas canvas, int position) {
         Path path = new Path();
         path.rewind();
@@ -394,6 +411,9 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
         canvas.drawPath(path, unSelectedPaint);
     }
 
+    /**
+     * 开启选择点的位移动画
+     */
     private void startAnimation() {
         ValueAnimator animator = ValueAnimator.ofFloat(0, 1.0f);
         animator.setDuration(200);
@@ -421,7 +441,6 @@ public class WaterDropIndicator extends View implements ViewPager.OnPageChangeLi
 
             @Override
             public void onAnimationCancel(Animator animation) {
-
             }
 
             @Override
