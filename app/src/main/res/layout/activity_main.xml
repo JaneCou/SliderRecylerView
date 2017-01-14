@@ -36,4 +36,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center" />
+
+    <Button
+        android:text="scaleClick"
+        android:gravity="center"
+        android:onClick="scaleClick"
+        android:layout_width="match_parent"
+        android:textAllCaps="false"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:text="pullClick"
+        android:gravity="center"
+        android:onClick="pullClick"
+        android:layout_width="match_parent"
+        android:textAllCaps="false"
+        android:layout_height="wrap_content" />
 </LinearLayout>

@@ -18,7 +18,9 @@
         <activity android:name=".LoopDemo" />
         <activity android:name=".SlisderDemo" />
         <activity android:name=".PathDemo" />
-        <activity android:name=".WaterDropDemo"></activity>
+        <activity android:name=".WaterDropDemo" />
+        <activity android:name=".ScaleDemo" />
+        <activity android:name=".PullDemo"></activity>
     </application>
 
 </manifest>

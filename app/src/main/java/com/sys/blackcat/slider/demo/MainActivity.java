@@ -1,7 +1,6 @@
 package com.sys.blackcat.slider.demo;
 
 import android.content.Intent;
-import android.graphics.Path;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -34,4 +33,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void scaleClick(View view){
+        Intent intent = new Intent(this, ScaleDemo.class);
+        startActivity(intent);
+    }
+
+    public void pullClick(View view){
+        Intent intent = new Intent(this, PullDemo.class);
+        startActivity(intent);
+    }
 }
