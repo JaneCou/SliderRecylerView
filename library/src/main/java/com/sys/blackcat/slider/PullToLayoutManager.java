@@ -3,8 +3,6 @@ package com.sys.blackcat.slider;
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -15,16 +13,11 @@ public class PullToLayoutManager extends LinearLayoutManager {
 
     private int state = RecyclerView.SCROLL_STATE_IDLE;
 
-    public PullToLayoutManager(Context context) {
-        super(context);
-    }
+    private boolean canPullRefresh;
+
 
     public PullToLayoutManager(Context context, int orientation, boolean reverseLayout) {
         super(context, orientation, reverseLayout);
-    }
-
-    public PullToLayoutManager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
     }
 
 
@@ -40,26 +33,49 @@ public class PullToLayoutManager extends LinearLayoutManager {
 
     @Override
     public int scrollVerticallyBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
-        Log.d("----->", " dy" + dy);
-        int scrollDy = super.scrollVerticallyBy(dy, recycler, state);
-        if (this.state == RecyclerView.SCROLL_STATE_SETTLING) {
-            return scrollDy;
-        }
-        if (dy > 0) {
-            return scrollDy;
-        }
-        Log.d("----->", " scrollDy" + scrollDy);
-        int position = findFirstVisibleItemPosition();
-        if (position == 0) {
-            View child = recycler.getViewForPosition(position);
-            if (getDecoratedLeft(child) == 0) {
-                offsetChildrenVertical(-dy);
+        if (this.state == RecyclerView.SCROLL_STATE_SETTLING && dy < 0) {
+            int newDy = scrollVerticallyBy(dy);
+            if (newDy != 1) {
+                return newDy;
             }
-        } else {
-            return scrollDy;
         }
-        return scrollDy - Math.abs(dy);
+        if (this.state == RecyclerView.SCROLL_STATE_DRAGGING && dy < 0) {
+            if (canPullRefresh) {
+
+            } else {
+                int newDy = scrollVerticallyBy(dy);
+                if (newDy != 1) {
+                    return newDy;
+                }
+            }
+            // Log.d(" --- > ", " firstPosition " + firstPosition);
+        }
+        return super.scrollVerticallyBy(dy, recycler, state);
+
     }
+
+    private int getChildTop(View child) {
+        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
+        return getDecoratedTop(child) - params.topMargin;
+    }
+
+    private int scrollVerticallyBy(int dy) {
+        View firstView = getChildAt(0);
+        int firstPosition = getPosition(firstView);
+        if (firstPosition == 1) {
+            int firstTop = getChildTop(firstView);
+            if (firstTop - dy > getPaddingTop()) {
+                int newDy = firstTop - getPaddingTop();
+                if (newDy > 0) {
+                    newDy = 0;
+                }
+                offsetChildrenVertical(-newDy);
+                return newDy;
+            }
+        }
+        return 1;
+    }
+
 
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -69,8 +85,20 @@ public class PullToLayoutManager extends LinearLayoutManager {
     @Override
     public void onScrollStateChanged(int state) {
         super.onScrollStateChanged(state);
-        Class s;
-            s.getSuperclass()
+        if (state == RecyclerView.SCROLL_STATE_DRAGGING) {
+            if (this.state != RecyclerView.SCROLL_STATE_DRAGGING) {
+                View firstView = getChildAt(0);
+                int firstPosition = getPosition(firstView);
+                int childTop = getChildTop(firstView);
+                if (firstPosition == 1 && childTop == 0) {
+                    canPullRefresh = true;
+                } else {
+                    canPullRefresh = false;
+                }
+            }
+        }
         this.state = state;
     }
+
+
 }

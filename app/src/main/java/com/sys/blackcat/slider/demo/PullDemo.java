@@ -2,6 +2,7 @@ package com.sys.blackcat.slider.demo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
@@ -20,6 +21,7 @@ public class PullDemo extends AppCompatActivity {
 //        recyclerView.setLayoutManager(layoutManager);
         recyclerView.setLayoutManager(new PullToLayoutManager(this, LinearLayoutManager.VERTICAL,false));
         recyclerView.setAdapter(new PullAdapter());
+        recyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
     }
 
 
