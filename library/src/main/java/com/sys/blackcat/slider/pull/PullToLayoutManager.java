@@ -1,4 +1,4 @@
-package com.sys.blackcat.slider;
+package com.sys.blackcat.slider.pull;
 
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,9 +11,9 @@ import android.view.View;
 
 public class PullToLayoutManager extends LinearLayoutManager {
 
-    private int state = RecyclerView.SCROLL_STATE_IDLE;
+    protected int state = RecyclerView.SCROLL_STATE_IDLE;
 
-    private boolean canPullRefresh;
+    protected boolean canPullRefresh;
 
 
     public PullToLayoutManager(Context context, int orientation, boolean reverseLayout) {
@@ -41,6 +41,8 @@ public class PullToLayoutManager extends LinearLayoutManager {
         }
         if (this.state == RecyclerView.SCROLL_STATE_DRAGGING && dy < 0) {
             if (canPullRefresh) {
+                dy = dy / 2;
+                offsetChildrenVertical(-dy);
 
             } else {
                 int newDy = scrollVerticallyBy(dy);
@@ -48,13 +50,12 @@ public class PullToLayoutManager extends LinearLayoutManager {
                     return newDy;
                 }
             }
-            // Log.d(" --- > ", " firstPosition " + firstPosition);
         }
         return super.scrollVerticallyBy(dy, recycler, state);
 
     }
 
-    private int getChildTop(View child) {
+    protected int getChildTop(View child) {
         RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
         return getDecoratedTop(child) - params.topMargin;
     }
@@ -75,30 +76,5 @@ public class PullToLayoutManager extends LinearLayoutManager {
         }
         return 1;
     }
-
-
-    @Override
-    public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-        super.onLayoutChildren(recycler, state);
-    }
-
-    @Override
-    public void onScrollStateChanged(int state) {
-        super.onScrollStateChanged(state);
-        if (state == RecyclerView.SCROLL_STATE_DRAGGING) {
-            if (this.state != RecyclerView.SCROLL_STATE_DRAGGING) {
-                View firstView = getChildAt(0);
-                int firstPosition = getPosition(firstView);
-                int childTop = getChildTop(firstView);
-                if (firstPosition == 1 && childTop == 0) {
-                    canPullRefresh = true;
-                } else {
-                    canPullRefresh = false;
-                }
-            }
-        }
-        this.state = state;
-    }
-
 
 }
