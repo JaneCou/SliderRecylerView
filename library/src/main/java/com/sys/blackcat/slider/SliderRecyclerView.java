@@ -40,9 +40,11 @@ public class SliderRecyclerView extends RecyclerView {
                         return;
                     }
                     if (end >= width / 2) {
-                        smoothScrollToPosition(firstItme);
+                      //  smoothScrollToPosition(firstItme);
+                        smoothScrollBy(-(getMeasuredWidth() - end), 0);
                     } else {
-                        smoothScrollToPosition(firstItme + 1);
+                        smoothScrollBy(end, 0);
+                       // smoothScrollToPosition(firstItme + 1);
                     }
                 } else {
                     int bottom = linearLayoutManager.getDecoratedBottom(childView) + params.bottomMargin;
@@ -51,9 +53,11 @@ public class SliderRecyclerView extends RecyclerView {
                         return;
                     }
                     if (bottom > height / 2) {
-                        smoothScrollToPosition(firstItme);
+                        smoothScrollBy(0, -(getMeasuredHeight() - bottom));
+                      //  smoothScrollToPosition(firstItme);
                     } else {
-                        smoothScrollToPosition(firstItme + 1);
+                        smoothScrollBy(0, bottom);
+                      //  smoothScrollToPosition(firstItme + 1);
                     }
                 }
             }
@@ -62,7 +66,7 @@ public class SliderRecyclerView extends RecyclerView {
 
     public boolean fling(int velocityX, int velocityY) {
         LayoutManager layoutManager = getLayoutManager();
-        if (layoutManager.canScrollHorizontally() && Math.abs(velocityX) < getMinFlingVelocity() * 2) {
+        if (layoutManager.canScrollHorizontally() && Math.abs(velocityX) < getMinFlingVelocity()) {
             return false;
         }
         if (layoutManager.canScrollVertically() && Math.abs(velocityY) < getMinFlingVelocity()) {
@@ -71,23 +75,30 @@ public class SliderRecyclerView extends RecyclerView {
         if (layoutManager instanceof SliderManager) {
             SliderManager linearLayoutManager = (SliderManager) layoutManager;
             int firstItme = linearLayoutManager.findFirstVisibleItemPosition();
+            View childView = layoutManager.findViewByPosition(firstItme);
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) childView.getLayoutParams();
             if (linearLayoutManager.canScrollHorizontally()) {
+                int end = linearLayoutManager.getDecoratedRight(childView) + params.rightMargin;
                 if (velocityX > 0) {//从右往左滑动
                     if (firstItme == getAdapter().getItemCount() - 1) {
                         return false;
                     }
-                    smoothScrollToPosition(firstItme + 1);
+                    smoothScrollBy(end, 0);
+                    // smoothScrollToPosition(firstItme + 1);
                 } else {//从左往右滑动
-                    smoothScrollToPosition(firstItme);
+                    smoothScrollBy(-(getMeasuredWidth() - end), 0);
+                    // smoothScrollToPosition(firstItme);
                 }
             } else {
+                int bottom = linearLayoutManager.getDecoratedBottom(childView) + params.bottomMargin;
                 if (velocityY > 0) {//从上往下滑动
                     if (firstItme == getAdapter().getItemCount() - 1) {
                         return false;
                     }
-                    smoothScrollToPosition(firstItme + 1);
+                    smoothScrollBy(0, bottom);
+                    //  smoothScrollToPosition(firstItme + 1);
                 } else {//从下往上滑动
-                    smoothScrollToPosition(firstItme);
+                    smoothScrollBy(0, -(getMeasuredHeight() - bottom));
                 }
             }
             return true;
