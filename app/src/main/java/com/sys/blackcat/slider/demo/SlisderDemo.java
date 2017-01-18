@@ -3,12 +3,10 @@ package com.sys.blackcat.slider.demo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
-
-
-import com.sys.blackcat.slider.SliderManager;
 
 public class SlisderDemo extends AppCompatActivity {
 
@@ -20,9 +18,7 @@ public class SlisderDemo extends AppCompatActivity {
         setContentView(R.layout.activity_slider_demo);
         setTitle("horizontal");
         recyclerView = (RecyclerView) findViewById(R.id.activity_loop_demo);
-        SliderManager layoutManager = SliderManager.getHorizontal(this);
-        recyclerView.setLayoutManager(layoutManager);
-      //  recyclerView.setLayoutManager(new SliderLayoutManager());
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         recyclerView.setAdapter(new MyAdapter());
     }
 
@@ -31,19 +27,20 @@ public class SlisderDemo extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_vertical:
-               if ( !getTitle().equals("vertical")){
-                   recyclerView.setLayoutManager(SliderManager.getVertical(this));
-                   setTitle("vertical");
-               }
+                if (!getTitle().equals("vertical")) {
+                    recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+                    setTitle("vertical");
+                }
 
                 return true;
             case R.id.menu_Horizontal:
-                if ( !getTitle().equals("horizontal")){
-                    recyclerView.setLayoutManager(SliderManager.getHorizontal(this));
+                if (!getTitle().equals("horizontal")) {
+                    recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
                     setTitle("horizontal");
                 }
                 return true;

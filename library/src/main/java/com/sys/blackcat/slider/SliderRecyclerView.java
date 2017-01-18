@@ -2,6 +2,7 @@ package com.sys.blackcat.slider;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
@@ -28,8 +29,8 @@ public class SliderRecyclerView extends RecyclerView {
     public void onScrollStateChanged(int state) {
         if (state == RecyclerView.SCROLL_STATE_IDLE) {
             LayoutManager layoutManager = getLayoutManager();
-            if (layoutManager instanceof SliderManager) {
-                SliderManager linearLayoutManager = (SliderManager) layoutManager;
+            if (layoutManager instanceof LinearLayoutManager) {
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
                 int firstItme = linearLayoutManager.findFirstVisibleItemPosition();
                 View childView = layoutManager.findViewByPosition(firstItme);
                 final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) childView.getLayoutParams();
@@ -40,11 +41,9 @@ public class SliderRecyclerView extends RecyclerView {
                         return;
                     }
                     if (end >= width / 2) {
-                      //  smoothScrollToPosition(firstItme);
                         smoothScrollBy(-(getMeasuredWidth() - end), 0);
                     } else {
                         smoothScrollBy(end, 0);
-                       // smoothScrollToPosition(firstItme + 1);
                     }
                 } else {
                     int bottom = linearLayoutManager.getDecoratedBottom(childView) + params.bottomMargin;
@@ -54,10 +53,8 @@ public class SliderRecyclerView extends RecyclerView {
                     }
                     if (bottom > height / 2) {
                         smoothScrollBy(0, -(getMeasuredHeight() - bottom));
-                      //  smoothScrollToPosition(firstItme);
                     } else {
                         smoothScrollBy(0, bottom);
-                      //  smoothScrollToPosition(firstItme + 1);
                     }
                 }
             }
@@ -72,8 +69,8 @@ public class SliderRecyclerView extends RecyclerView {
         if (layoutManager.canScrollVertically() && Math.abs(velocityY) < getMinFlingVelocity()) {
             return false;
         }
-        if (layoutManager instanceof SliderManager) {
-            SliderManager linearLayoutManager = (SliderManager) layoutManager;
+        if (layoutManager instanceof LinearLayoutManager) {
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
             int firstItme = linearLayoutManager.findFirstVisibleItemPosition();
             View childView = layoutManager.findViewByPosition(firstItme);
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) childView.getLayoutParams();
